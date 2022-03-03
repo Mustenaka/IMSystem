@@ -28,6 +28,21 @@ func NewUser(conn net.Conn) *User {
 	return user
 }
 
+// When user online.
+func (t *User) Online() {
+
+}
+
+// When user offline
+func (t *User) Offline() {
+
+}
+
+// user handles message
+func (t *User) DoMessage() {
+
+}
+
 // listen user channel function. when message coming, send to client
 func (t *User) ListenMessage() {
 	for {
