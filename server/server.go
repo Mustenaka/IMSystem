@@ -49,7 +49,9 @@ func (t *Server) ListenMessager() {
 // Broadcast function
 func (t *Server) Broadcast(user *user.User, msg string) {
 	sendMsg := "[" + user.Addr + "]" + user.Name + ":" + msg
+	// show the message on the server console.
 	fmt.Println(sendMsg)
+	// send message to server channel
 	t.Message <- sendMsg
 }
 
