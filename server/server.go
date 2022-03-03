@@ -3,6 +3,7 @@ package server
 import (
 	"fmt"
 	"imSystem/user"
+	"io"
 	"net"
 	"sync"
 )
@@ -65,7 +66,35 @@ func (t *Server) Handler(conn net.Conn) {
 	t.mapLock.Unlock()
 
 	// boardcast user online
-	t.Broadcast(user, "Online")
+	t.Broadcast(user, "online")
+
+	// Get Client message (like objective-C 'block function')
+	go func() {
+		// notice: when user send message is bigger than 4096 btyes, it will break.
+		buf := make([]byte, 4096)
+
+		for {
+			n, err := conn.Read(buf)
+
+			// Get user send 0, is mean user will offline
+			if n == 0 {
+				t.Broadcast(user, "offline")
+				return
+			}
+
+			// if err is not nil and err is not end of file, is mean Connection read error.
+			if err != nil && err != io.EOF {
+				fmt.Println("Conn Read err:", err)
+				return
+			}
+
+			// get user message (remove '\n')
+			msg := string(buf[:n-1])
+
+			// broadcast the message
+			t.Broadcast(user, msg)
+		}
+	}()
 
 	// don't let handler die
 	select {}
