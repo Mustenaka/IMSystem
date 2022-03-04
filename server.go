@@ -1,11 +1,11 @@
-package server
+package main
 
 import (
 	"fmt"
-	"imSystem/user"
 	"io"
 	"net"
 	"sync"
+	"time"
 )
 
 type Server struct {
@@ -13,7 +13,7 @@ type Server struct {
 	Port int
 
 	// online user map & map lock
-	OnlineMap map[string]*user.User
+	OnlineMap map[string]*User
 	mapLock   sync.RWMutex
 
 	// broadcast channel
@@ -25,7 +25,7 @@ func NewServer(ip string, port int) *Server {
 	server := &Server{
 		IP:        ip,
 		Port:      port,
-		OnlineMap: make(map[string]*user.User),
+		OnlineMap: make(map[string]*User),
 		Message:   make(chan string),
 	}
 	return server
@@ -47,7 +47,7 @@ func (t *Server) ListenMessager() {
 }
 
 // Broadcast function
-func (t *Server) Broadcast(user *user.User, msg string) {
+func (t *Server) Broadcast(user *User, msg string) {
 	sendMsg := "[" + user.Addr + "]" + user.Name + ":" + msg
 	// show the message on the server console.
 	fmt.Println(sendMsg)
@@ -57,18 +57,13 @@ func (t *Server) Broadcast(user *user.User, msg string) {
 
 // bussiness
 func (t *Server) Handler(conn net.Conn) {
-	// do something
-	// fmt.Println("target handler!")
+	user := NewUser(conn, t)
 
-	user := user.NewUser(conn)
+	// user online
+	user.Online()
 
-	// user online, onlineMap add user
-	t.mapLock.Lock()
-	t.OnlineMap[user.Name] = user
-	t.mapLock.Unlock()
-
-	// boardcast user online
-	t.Broadcast(user, "online")
+	// listen is live?
+	isLive := make(chan bool)
 
 	// Get Client message (like objective-C 'block function')
 	go func() {
@@ -80,7 +75,7 @@ func (t *Server) Handler(conn net.Conn) {
 
 			// Get user send 0, is mean user will offline
 			if n == 0 {
-				t.Broadcast(user, "offline")
+				user.Offline()
 				return
 			}
 
@@ -93,13 +88,25 @@ func (t *Server) Handler(conn net.Conn) {
 			// get user message (remove '\n')
 			msg := string(buf[:n-1])
 
-			// broadcast the message
-			t.Broadcast(user, msg)
+			// user do somethine for message
+			user.DoMessage(msg)
+
+			// user is live
+			isLive <- true
 		}
 	}()
 
 	// don't let handler die
-	select {}
+	for {
+		select {
+		case <-isLive:
+			// is live, rebot timer
+		case <-time.After(time.Hour * 1):
+			// has been over time
+
+			// close user
+		}
+	}
 }
 
 // Start API
