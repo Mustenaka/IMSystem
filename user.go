@@ -40,31 +40,29 @@ func (t *User) sendMsg(msg string) {
 // When user online.
 func (t *User) Online() {
 	// user online, onlineMap add user
-	t.mapLock.Lock()
-	t.OnlineMap[t.Name] = t
-	t.mapLock.Unlock()
+	t.server.mapLock.Lock()
+	t.server.OnlineMap[t.Name] = t
+	t.server.mapLock.Unlock()
 
 	// boardcast user online
-	t.Broadcast(t, "online")
+	t.server.Broadcast(t, "online")
 }
 
 // When user offline
 func (t *User) Offline() {
 	// user offline, onlineMap remove user
-	t.mapLock.Lock()
-	delete(t.OnlineMap, t.Name)
-	t.mapLock.Unlock()
+	t.server.mapLock.Lock()
+	delete(t.server.OnlineMap, t.Name)
+	t.server.mapLock.Unlock()
 
 	// boardcast user offline
-	t.Broadcast(t, "offline")
+	t.server.Broadcast(t, "offline")
 }
 
 // user handles message
 func (t *User) DoMessage(msg string) {
 
-	t.mapLock
-
-	t.Broadcast(t, msg)
+	t.server.Broadcast(t, msg)
 }
 
 // listen user channel function. when message coming, send to client
